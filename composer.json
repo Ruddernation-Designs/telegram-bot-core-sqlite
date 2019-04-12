@@ -1,15 +1,21 @@
 {
-    "name": "longman/telegram-bot",
+    "name": "greevex/telegram-bot-core-sqlite",
     "type": "library",
-    "description": "PHP Telegram bot",
+    "description": "PHP Telegram bot (sqlite version)",
     "keywords": ["telegram", "bot", "api"],
     "license": "MIT",
     "homepage": "https://github.com/php-telegram-bot/core",
     "support": {
-        "issues": "https://github.com/php-telegram-bot/core/issues",
-        "source": "https://github.com/php-telegram-bot/core"
+        "issues": "https://github.com/greevex/telegram-bot-core-sqlite/issues",
+        "source": "https://github.com/greevex/telegram-bot-core-sqlite"
     },
     "authors": [
+        {
+            "name": "Gregory Ostrovsky aka greevex",
+            "email": "greevex@gmail.com",
+            "homepage": "http://ostrovsky.me",
+            "role": "Developer"
+        },
         {
             "name": "Avtandil Kikabidze aka LONGMAN",
             "email": "akalongman@gmail.com",

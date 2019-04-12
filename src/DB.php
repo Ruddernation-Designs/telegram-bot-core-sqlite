@@ -332,7 +332,7 @@ class DB
 
         try {
             $sth = self::$pdo->prepare('
-                INSERT IGNORE INTO `' . TB_TELEGRAM_UPDATE . '`
+                INSERT OR IGNORE INTO `' . TB_TELEGRAM_UPDATE . '`
                 (`id`, `chat_id`, `message_id`, `inline_query_id`, `chosen_inline_result_id`, `callback_query_id`, `edited_message_id`)
                 VALUES
                 (:id, :chat_id, :message_id, :inline_query_id, :chosen_inline_result_id, :callback_query_id, :edited_message_id)
@@ -370,17 +370,18 @@ class DB
 
         try {
             $sth = self::$pdo->prepare('
-                INSERT INTO `' . TB_USER . '`
+                INSERT OR IGNORE INTO `' . TB_USER . '`
                 (`id`, `is_bot`, `username`, `first_name`, `last_name`, `language_code`, `created_at`, `updated_at`)
                 VALUES
-                (:id, :is_bot, :username, :first_name, :last_name, :language_code, :created_at, :updated_at)
-                ON DUPLICATE KEY UPDATE
+                (:id, :is_bot, :username, :first_name, :last_name, :language_code, :created_at, :updated_at);
+                UPDATE OR IGNORE `' . TB_USER . '` SET
                     `is_bot`         = VALUES(`is_bot`),
                     `username`       = VALUES(`username`),
                     `first_name`     = VALUES(`first_name`),
                     `last_name`      = VALUES(`last_name`),
                     `language_code`  = VALUES(`language_code`),
                     `updated_at`     = VALUES(`updated_at`)
+                WHERE `id`=:id;
             ');
 
             $sth->bindValue(':id', $user->getId());
@@ -402,7 +403,7 @@ class DB
         if ($chat instanceof Chat) {
             try {
                 $sth = self::$pdo->prepare('
-                    INSERT IGNORE INTO `' . TB_USER_CHAT . '`
+                    INSERT OR IGNORE INTO `' . TB_USER_CHAT . '`
                     (`user_id`, `chat_id`)
                     VALUES
                     (:user_id, :chat_id)
@@ -438,16 +439,17 @@ class DB
 
         try {
             $sth = self::$pdo->prepare('
-                INSERT IGNORE INTO `' . TB_CHAT . '`
+                INSERT OR IGNORE INTO `' . TB_CHAT . '`
                 (`id`, `type`, `title`, `username`, `all_members_are_administrators`, `created_at` ,`updated_at`, `old_id`)
                 VALUES
-                (:id, :type, :title, :username, :all_members_are_administrators, :created_at, :updated_at, :old_id)
-                ON DUPLICATE KEY UPDATE
+                (:id, :type, :title, :username, :all_members_are_administrators, :created_at, :updated_at, :old_id);
+                UPDATE OR IGNORE `' . TB_CHAT . '` SET
                     `type`                           = VALUES(`type`),
                     `title`                          = VALUES(`title`),
                     `username`                       = VALUES(`username`),
                     `all_members_are_administrators` = VALUES(`all_members_are_administrators`),
                     `updated_at`                     = VALUES(`updated_at`)
+                WHERE `id`=:id;
             ');
 
             $chat_id   = $chat->getId();
@@ -620,7 +622,7 @@ class DB
 
         try {
             $sth = self::$pdo->prepare('
-                INSERT IGNORE INTO `' . TB_INLINE_QUERY . '`
+                INSERT OR IGNORE INTO `' . TB_INLINE_QUERY . '`
                 (`id`, `user_id`, `location`, `query`, `offset`, `created_at`)
                 VALUES
                 (:id, :user_id, :location, :query, :offset, :created_at)
@@ -708,7 +710,7 @@ class DB
 
         try {
             $sth = self::$pdo->prepare('
-                INSERT IGNORE INTO `' . TB_CALLBACK_QUERY . '`
+                INSERT OR IGNORE INTO `' . TB_CALLBACK_QUERY . '`
                 (`id`, `user_id`, `chat_id`, `message_id`, `inline_message_id`, `data`, `created_at`)
                 VALUES
                 (:id, :user_id, :chat_id, :message_id, :inline_message_id, :data, :created_at)
@@ -825,7 +827,7 @@ class DB
 
         try {
             $sth = self::$pdo->prepare('
-                INSERT IGNORE INTO `' . TB_MESSAGE . '`
+                INSERT OR IGNORE INTO `' . TB_MESSAGE . '`
                 (
                     `id`, `user_id`, `chat_id`, `date`, `forward_from`, `forward_from_chat`, `forward_from_message_id`,
                     `forward_date`, `reply_to_chat`, `reply_to_message`, `media_group_id`, `text`, `entities`, `audio`, `document`,
@@ -940,7 +942,7 @@ class DB
             }
 
             $sth = self::$pdo->prepare('
-                INSERT IGNORE INTO `' . TB_EDITED_MESSAGE . '`
+                INSERT OR IGNORE INTO `' . TB_EDITED_MESSAGE . '`
                 (`chat_id`, `message_id`, `user_id`, `edit_date`, `text`, `entities`, `caption`)
                 VALUES
                 (:chat_id, :message_id, :user_id, :edit_date, :text, :entities, :caption)
@@ -1189,7 +1191,7 @@ class DB
             }
 
             $sql = 'UPDATE `' . $table . '` SET ' . implode(', ', $fields);
-            $sql .= count($where) > 0 ? ' WHERE ' . implode(' AND ', $where) : '';
+            $sql .= count($where) > 0 ? ' WHERE ' . implode(' AND ', $where) : ';';
 
             return self::$pdo->prepare($sql)->execute($tokens);
         } catch (Exception $e) {
