@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the TelegramBot package.
  *
@@ -28,15 +29,20 @@ use Longman\TelegramBot\Entities\TelegramPassport\PassportData;
  * @method Chat              getForwardFromChat()       Optional. For messages forwarded from a channel, information about the original channel
  * @method int               getForwardFromMessageId()  Optional. For forwarded channel posts, identifier of the original message in the channel
  * @method string            getForwardSignature()      Optional. For messages forwarded from channels, signature of the post author if present
+ * @method string            getForwardSenderName()     Optional. Sender's name for messages forwarded from users who disallow adding a link to their account in forwarded messages
  * @method int               getForwardDate()           Optional. For forwarded messages, date the original message was sent in Unix time
- * @method Message           getReplyToMessage()        Optional. For replies, the original message. Note that the Message object in this field will not contain further reply_to_message fields even if it itself is a reply.
+ * @method ReplyToMessage    getReplyToMessage()        Optional. For replies, the original message. Note that the Message object in this field will not contain further reply_to_message fields even if it itself is a reply.
+ * @method User              getViaBot()                Optional. Bot through which the message was sent
  * @method int               getEditDate()              Optional. Date the message was last edited in Unix time
  * @method string            getMediaGroupId()          Optional. The unique identifier of a media message group this message belongs to
  * @method string            getAuthorSignature()       Optional. Signature of the post author for messages in channels
+ * @method MessageEntity[]   getEntities()              Optional. For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the text
+ * @method MessageEntity[]   getCaptionEntities()       Optional. For messages with a caption, special entities like usernames, URLs, bot commands, etc. that appear in the caption
  * @method Audio             getAudio()                 Optional. Message is an audio file, information about the file
  * @method Document          getDocument()              Optional. Message is a general file, information about the file
  * @method Animation         getAnimation()             Optional. Message is an animation, information about the animation. For backward compatibility, when this field is set, the document field will also be set
  * @method Game              getGame()                  Optional. Message is a game, information about the game.
+ * @method PhotoSize[]       getPhoto()                 Optional. Message is a photo, available sizes of the photo
  * @method Sticker           getSticker()               Optional. Message is a sticker, information about the sticker
  * @method Video             getVideo()                 Optional. Message is a video, information about the video
  * @method Voice             getVoice()                 Optional. Message is a voice message, information about the file
@@ -45,8 +51,12 @@ use Longman\TelegramBot\Entities\TelegramPassport\PassportData;
  * @method Contact           getContact()               Optional. Message is a shared contact, information about the contact
  * @method Location          getLocation()              Optional. Message is a shared location, information about the location
  * @method Venue             getVenue()                 Optional. Message is a venue, information about the venue
+ * @method Poll              getPoll()                  Optional. Message is a native poll, information about the poll
+ * @method Dice              getDice()                  Optional. Message is a dice with random value from 1 to 6
+ * @method User[]            getNewChatMembers()        Optional. A new member(s) was added to the group, information about them (one of this members may be the bot itself)
  * @method User              getLeftChatMember()        Optional. A member was removed from the group, information about them (this member may be the bot itself)
  * @method string            getNewChatTitle()          Optional. A chat title was changed to this value
+ * @method PhotoSize[]       getNewChatPhoto()          Optional. A chat photo was changed to this value
  * @method bool              getDeleteChatPhoto()       Optional. Service message: the chat photo was deleted
  * @method bool              getGroupChatCreated()      Optional. Service message: the group has been created
  * @method bool              getSupergroupChatCreated() Optional. Service message: the supergroup has been created. This field can't be received in a message coming through updates, because bot can’t be a member of a supergroup when it is created. It can only be found in reply_to_message if someone replies to a very first message in a directly created supergroup.
@@ -58,6 +68,7 @@ use Longman\TelegramBot\Entities\TelegramPassport\PassportData;
  * @method SuccessfulPayment getSuccessfulPayment()     Optional. Message is a service message about a successful payment, information about the payment.
  * @method string            getConnectedWebsite()      Optional. The domain name of the website on which the user has logged in.
  * @method PassportData      getPassportData()          Optional. Telegram Passport data
+ * @method InlineKeyboard    getReplyMarkup()           Optional. Inline keyboard attached to the message. login_url buttons are represented as ordinary url buttons.
  */
 class Message extends Entity
 {
@@ -72,13 +83,14 @@ class Message extends Entity
             'forward_from'       => User::class,
             'forward_from_chat'  => Chat::class,
             'reply_to_message'   => ReplyToMessage::class,
-            'entities'           => MessageEntity::class,
-            'caption_entities'   => MessageEntity::class,
+            'via_bot'            => User::class,
+            'entities'           => [MessageEntity::class],
+            'caption_entities'   => [MessageEntity::class],
             'audio'              => Audio::class,
             'document'           => Document::class,
             'animation'          => Animation::class,
             'game'               => Game::class,
-            'photo'              => PhotoSize::class,
+            'photo'              => [PhotoSize::class],
             'sticker'            => Sticker::class,
             'video'              => Video::class,
             'voice'              => Voice::class,
@@ -86,102 +98,17 @@ class Message extends Entity
             'contact'            => Contact::class,
             'location'           => Location::class,
             'venue'              => Venue::class,
-            'new_chat_members'   => User::class,
+            'poll'               => Poll::class,
+            'dice'               => Dice::class,
+            'new_chat_members'   => [User::class],
             'left_chat_member'   => User::class,
-            'new_chat_photo'     => PhotoSize::class,
+            'new_chat_photo'     => [PhotoSize::class],
             'pinned_message'     => Message::class,
             'invoice'            => Invoice::class,
             'successful_payment' => SuccessfulPayment::class,
             'passport_data'      => PassportData::class,
+            'reply_markup'       => InlineKeyboard::class,
         ];
-    }
-
-    /**
-     * Message constructor
-     *
-     * @param array  $data
-     * @param string $bot_username
-     *
-     * @throws \Longman\TelegramBot\Exception\TelegramException
-     */
-    public function __construct(array $data, $bot_username = '')
-    {
-        parent::__construct($data, $bot_username);
-    }
-
-    /**
-     * Optional. Message is a photo, available sizes of the photo
-     *
-     * This method overrides the default getPhoto method
-     * and returns a nice array of PhotoSize objects.
-     *
-     * @return null|PhotoSize[]
-     */
-    public function getPhoto()
-    {
-        $pretty_array = $this->makePrettyObjectArray(PhotoSize::class, 'photo');
-
-        return empty($pretty_array) ? null : $pretty_array;
-    }
-
-    /**
-     * Optional. A chat photo was changed to this value
-     *
-     * This method overrides the default getNewChatPhoto method
-     * and returns a nice array of PhotoSize objects.
-     *
-     * @return null|PhotoSize[]
-     */
-    public function getNewChatPhoto()
-    {
-        $pretty_array = $this->makePrettyObjectArray(PhotoSize::class, 'new_chat_photo');
-
-        return empty($pretty_array) ? null : $pretty_array;
-    }
-
-    /**
-     * Optional. A new member(s) was added to the group, information about them (one of this members may be the bot itself)
-     *
-     * This method overrides the default getNewChatMembers method
-     * and returns a nice array of User objects.
-     *
-     * @return null|User[]
-     */
-    public function getNewChatMembers()
-    {
-        $pretty_array = $this->makePrettyObjectArray(User::class, 'new_chat_members');
-
-        return empty($pretty_array) ? null : $pretty_array;
-    }
-
-    /**
-     * Optional. For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the text
-     *
-     * This method overrides the default getEntities method
-     * and returns a nice array of MessageEntity objects.
-     *
-     * @return null|MessageEntity[]
-     */
-    public function getEntities()
-    {
-        $pretty_array = $this->makePrettyObjectArray(MessageEntity::class, 'entities');
-
-        return empty($pretty_array) ? null : $pretty_array;
-    }
-
-    /**
-     * Optional. For messages with a caption, special entities like usernames, URLs, bot commands, etc. that appear in the caption
-     *
-     * This method overrides the default getCaptionEntities method
-     * and returns a nice array of MessageEntity objects.
-     *
-     * @return null|MessageEntity[]
-     */
-    public function getCaptionEntities()
-    {
-        $pretty_array = $this->makePrettyObjectArray(MessageEntity::class, 'caption_entities');
-
-        return empty($pretty_array) ? null : $pretty_array;
     }
 
     /**
@@ -261,7 +188,6 @@ class Message extends Entity
      * Bot added in chat
      *
      * @return bool
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function botAddedInChat()
     {
@@ -284,8 +210,8 @@ class Message extends Entity
         $types = [
             'text',
             'audio',
-            'document',
             'animation',
+            'document',
             'game',
             'photo',
             'sticker',
@@ -295,6 +221,7 @@ class Message extends Entity
             'contact',
             'location',
             'venue',
+            'poll',
             'new_chat_members',
             'left_chat_member',
             'new_chat_title',
@@ -309,6 +236,7 @@ class Message extends Entity
             'invoice',
             'successful_payment',
             'passport_data',
+            'reply_markup',
         ];
 
         $is_command = strlen($this->getCommand()) > 0;

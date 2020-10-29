@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the TelegramBot package.
  *
@@ -30,7 +31,7 @@ class CallbackQuery extends Entity
     /**
      * {@inheritdoc}
      */
-    public function subEntities()
+    protected function subEntities()
     {
         return [
             'from'    => User::class,

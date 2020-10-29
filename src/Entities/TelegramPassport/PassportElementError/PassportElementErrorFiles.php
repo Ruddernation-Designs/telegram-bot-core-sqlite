@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the TelegramBot package.
  *
@@ -30,8 +31,6 @@ class PassportElementErrorFiles extends Entity implements PassportElementError
      * PassportElementErrorFiles constructor
      *
      * @param array $data
-     *
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function __construct(array $data = [])
     {

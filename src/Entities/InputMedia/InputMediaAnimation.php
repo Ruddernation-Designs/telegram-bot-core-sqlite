@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the TelegramBot package.
  *
@@ -52,8 +53,6 @@ class InputMediaAnimation extends Entity implements InputMedia
      * InputMediaAnimation constructor
      *
      * @param array $data
-     *
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function __construct(array $data = [])
     {
